@@ -17,6 +17,7 @@ import com.huizhi.aianswering.model.dto.useranswer.UserAnswerUpdateRequest;
 import com.huizhi.aianswering.model.entity.App;
 import com.huizhi.aianswering.model.entity.UserAnswer;
 import com.huizhi.aianswering.model.entity.User;
+import com.huizhi.aianswering.model.enums.ReviewStatusEnum;
 import com.huizhi.aianswering.model.vo.UserAnswerVO;
 import com.huizhi.aianswering.scoring.ScoringStrategyExecutor;
 import com.huizhi.aianswering.service.AppService;
@@ -75,8 +76,11 @@ public class UserAnswerController {
 
         // 判断app是否存在
         Long appId = userAnswerAddRequest.getAppId();
-        App byId = appService.getById(appId);
-        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        if (!ReviewStatusEnum.PASS.equals(ReviewStatusEnum.getEnumByValue(app.getReviewStatus()))) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "应用未通过审核，无法答题");
+        }
 
         // 填充默认值
         User loginUser = userService.getLoginUser(request);
@@ -89,7 +93,7 @@ public class UserAnswerController {
 
         // 调用评分模块
         try {
-            UserAnswer userAnswerReturn = scoringStrategyExecutor.doScore(choices, byId);
+            UserAnswer userAnswerReturn = scoringStrategyExecutor.doScore(choices, app);
             userAnswerReturn.setId(newUserAnswerId);
             userAnswerService.updateById(userAnswerReturn);
         } catch (Exception e) {
