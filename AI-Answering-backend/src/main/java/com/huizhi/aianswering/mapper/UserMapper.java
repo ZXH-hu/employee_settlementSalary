@@ -2,6 +2,7 @@ package com.huizhi.aianswering.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.huizhi.aianswering.model.entity.User;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 用户数据库操作
@@ -10,6 +11,15 @@ import com.huizhi.aianswering.model.entity.User;
  *    
  */
 public interface UserMapper extends BaseMapper<User> {
+
+    /**
+     * 更改密码
+     * @param userAccount
+     * @param encryptPassword
+     * @return
+     */
+    int updatePasswordByAccount(@Param("userAccount") String userAccount,
+                                @Param("encryptPassword") String encryptPassword);
 
 }
 

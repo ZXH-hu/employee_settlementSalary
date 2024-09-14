@@ -23,4 +23,7 @@
         userName,userAvatar,userProfile,
         userRole,createTime,updateTime,isDelete
     </sql>
+    <update id="updatePasswordByAccount">
+        update huizhi_answer.user set userPassword = #{encryptPassword} where userAccount = #{userAccount};
+    </update>
 </mapper>

@@ -1,6 +1,8 @@
 package com.huizhi.aianswering.controller;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huizhi.aianswering.annotation.AuthCheck;
 import com.huizhi.aianswering.common.BaseResponse;
@@ -25,6 +27,7 @@ import com.huizhi.aianswering.service.UserAnswerService;
 import com.huizhi.aianswering.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -57,8 +60,7 @@ public class UserAnswerController {
     // region 增删改查
 
     /**
-     * 创建用户答案
-     *
+     * 创建用户答案：根据传递过来的appId找到对应的应用类型（得分类型、测评类型）和评分策略（自定义评分、AI 评分）
      * @param userAnswerAddRequest
      * @param request
      * @return
@@ -86,15 +88,20 @@ public class UserAnswerController {
         User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
         // 写入数据库
-        boolean result = userAnswerService.save(userAnswer);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        try {
+            boolean result = userAnswerService.save(userAnswer);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        } catch (DuplicateKeyException e) {
+
+        }
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
 
-        // 调用评分模块
+        // 调用评分模块获取答案
         try {
             UserAnswer userAnswerReturn = scoringStrategyExecutor.doScore(choices, app);
             userAnswerReturn.setId(newUserAnswerId);
+            userAnswerReturn.setAppId(null);
             userAnswerService.updateById(userAnswerReturn);
         } catch (Exception e) {
             e.printStackTrace();
@@ -273,4 +280,13 @@ public class UserAnswerController {
     }
 
     // endregion
+
+    /**
+     * 生成雪花算法id（幂等性，唯一索引）
+     * @return
+     */
+    @GetMapping("/generate/id")
+    public BaseResponse<Long> generateUserAnswerId() {
+        return ResultUtils.success(IdUtil.getSnowflakeNextId());
+    }
 }

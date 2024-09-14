@@ -2,10 +2,7 @@ package com.huizhi.aianswering.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huizhi.aianswering.annotation.AuthCheck;
-import com.huizhi.aianswering.common.BaseResponse;
-import com.huizhi.aianswering.common.DeleteRequest;
-import com.huizhi.aianswering.common.ErrorCode;
-import com.huizhi.aianswering.common.ResultUtils;
+import com.huizhi.aianswering.common.*;
 import com.huizhi.aianswering.constant.UserConstant;
 import com.huizhi.aianswering.exception.BusinessException;
 import com.huizhi.aianswering.exception.ThrowUtils;
@@ -14,9 +11,12 @@ import com.huizhi.aianswering.model.entity.User;
 import com.huizhi.aianswering.model.vo.LoginUserVO;
 import com.huizhi.aianswering.model.vo.UserVO;
 import com.huizhi.aianswering.service.UserService;
+import com.wf.captcha.utils.CaptchaUtil;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,6 +40,12 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private RedisTemplate<String,String> redisTemplate;
+
+    @Resource
+    private AvatarService avatarService;
+
     // region 登录相关
 
     /**
@@ -54,12 +60,18 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
+        String userNickName = userRegisterRequest.getUserNickName();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             return null;
         }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        // 为用户分配一个随机头像
+        User user = new User();
+        String randomAvatar = avatarService.getRandomAvatar();
+        user.setUserAvatar("http://localhost:8101/api/images/" + randomAvatar); // 设置头像路径
+        String userAvatar = user.getUserAvatar();
+        long result = userService.userRegister(userAccount, userNickName, userPassword, checkPassword, userAvatar);
         return ResultUtils.success(result);
     }
 
@@ -70,10 +82,21 @@ public class UserController {
      * @param request
      * @return
      */
+    @ApiOperation("用户登录")
     @PostMapping("/login")
     public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String userKey = userLoginRequest.getUserKey();
+        // 校验验证码是否过期
+        if (StringUtils.isBlank(redisTemplate.opsForValue().get(userKey))) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码已过期");
+        }
+        if (!userLoginRequest.getCaptureCode().toLowerCase().equals(redisTemplate.opsForValue().get(userKey))){
+            //如果不相等即验证不通过，清除请求request，清除session
+            CaptchaUtil.clear(request);
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR,"验证码有误！");
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
@@ -165,7 +188,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
@@ -256,7 +279,7 @@ public class UserController {
     // endregion
 
     /**
-     * 更新个人信息
+     * 更新个人信息（修改密码）
      *
      * @param userUpdateMyRequest
      * @param request
@@ -268,12 +291,24 @@ public class UserController {
         if (userUpdateMyRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        User loginUser = userService.getLoginUser(request);
-        User user = new User();
-        BeanUtils.copyProperties(userUpdateMyRequest, user);
-        user.setId(loginUser.getId());
-        boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(true);
+        String userKey = userUpdateMyRequest.getUserKey();
+        // 校验验证码是否过期
+        if (StringUtils.isBlank(redisTemplate.opsForValue().get(userKey))) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码已过期");
+        }
+        if (!userUpdateMyRequest.getCaptureCode().toLowerCase().equals(redisTemplate.opsForValue().get(userKey))){
+            //如果不相等即验证不通过，清除请求request，清除session
+            CaptchaUtil.clear(request);
+            return ResultUtils.error(ErrorCode.PARAMS_ERROR,"验证码有误！");
+        }
+
+        String userAccount = userUpdateMyRequest.getUserAccount();
+        String userPassword = userUpdateMyRequest.getUserPassword();
+        String checkPassword = userUpdateMyRequest.getCheckPassword();
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        boolean isSucceed = userService.editMyInfo(userAccount, userPassword, checkPassword, request);
+        return ResultUtils.success(isSucceed);
     }
 }

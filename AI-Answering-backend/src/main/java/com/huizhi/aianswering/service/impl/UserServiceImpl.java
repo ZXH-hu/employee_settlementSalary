@@ -44,13 +44,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private RedissonClient redissonClient;
 
+    @Resource
+    private UserMapper userMapper;
+
     /**
      * 盐值，混淆密码
      */
     public static final String SALT = "xiaozhao";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userNickName, String userPassword, String checkPassword, String userAvatar) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -79,6 +82,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setUserName(userNickName);
+            user.setUserAvatar(userAvatar);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
@@ -144,6 +149,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 如果没有获取到锁，这里不会执行到
         throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后重试");
+    }
+
+    /**
+     * 修改用户信息（更改密码）
+     * @param userAccount
+     * @param userPassword
+     * @param checkPassword
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean editMyInfo(String userAccount, String userPassword, String checkPassword, HttpServletRequest request) {
+        // 1. 校验
+        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        if (userAccount.length() < 4) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号长度不能小于4");
+        }
+        if (userPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度不能小于8");
+        }
+        // 密码和校验密码相同
+        if (!userPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        synchronized (userAccount.intern()) {
+            // 账户不能重复
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("userAccount", userAccount);
+            long count = this.baseMapper.selectCount(queryWrapper);
+            if (!(count > 0)) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "输入账号不存在");
+            }
+            User user = new User();
+            // 2. 加密
+            String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+            // 3. 更新密码
+            int i = userMapper.updatePasswordByAccount(userAccount, encryptPassword);
+            if (!(i > 0)) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更改失败，数据库错误");
+            }
+            return true;
+        }
     }
 
 

@@ -11,6 +11,7 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+      static-path-pattern: /**
   # session 配置
   session:
     # todo 取消注释开启分布式 session（须先配置 Redis）
@@ -37,6 +38,41 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+
+  # 分库分表配置
+  shardingsphere:
+    #数据源配置
+    datasource:
+      # 多数据源以逗号隔开即可
+      names: huizhi_answer
+      huizhi_answer:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/huizhi_answer?useSSL=false&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: 123@
+    # 规则配置
+    rules:
+      sharding:
+        # 分片算法配置
+        sharding-algorithms:
+          # 自定义分片规则名
+          answer-table-inline:
+            ## inline 类型是简单的配置文件里面就能写的类型，其他还有自定义类等等
+            type: INLINE
+            props:
+              algorithm-expression: user_answer_$->{appId % 2}
+        tables:
+          user_answer:
+            actual-data-nodes: huizhi_answer.user_answer_$->{0..1}
+            # 分表策略
+            table-strategy:
+              standard:
+                sharding-column: appId
+                sharding-algorithm-name: answer-table-inline
+
+
+
 server:
   address: 0.0.0.0
   port: 8101
@@ -63,14 +99,8 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
-# 接口文档配置
-knife4j:
-  enable: true
-  openapi:
-    title: "接口文档"
-    version: 1.0
-    group:
-      default:
-        api-rule: package
-        api-rule-resources:
-          - com.huizhi.aianswering.controller
+
+# AI 配置
+ai:
+  apikey: 674281fd0d125cbf26d43f9e2f4fb00b.1g8faQKShVzDUN3N
+

@@ -13,19 +13,21 @@ import lombok.Data;
 public class UserUpdateMyRequest implements Serializable {
 
     /**
-     * 用户昵称
+     * id
      */
-    private String userName;
+    private Long id;
 
-    /**
-     * 用户头像
-     */
-    private String userAvatar;
+    private String userAccount;
 
-    /**
-     * 简介
-     */
-    private String userProfile;
+    private String userPassword;
+
+    private String captureCode;
+
+    private String userKey;
+
+    private String checkPassword;
+
+
 
     private static final long serialVersionUID = 1L;
 }

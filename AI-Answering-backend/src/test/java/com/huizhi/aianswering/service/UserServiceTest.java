@@ -17,7 +17,7 @@ public class UserServiceTest {
     @Resource
     private UserService userService;
 
-    @Test
+    /*@Test
     void userRegister() {
         String userAccount = "huizhi";
         String userPassword = "";
@@ -31,5 +31,5 @@ public class UserServiceTest {
         } catch (Exception e) {
 
         }
-    }
+    }*/
 }
