@@ -29,6 +29,6 @@ public class QuestionControllerTest {
         questionController.aiGenerateQuestionSSETest(aiGenerateQuestionRequest, true);
 
         // 模拟主线程一直启动100秒
-        Thread.sleep(1000000L);
+        Thread.sleep(20000L);
     }
 }

@@ -8,14 +8,14 @@ spring:
   # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/huizhi_answer?useSSL=false&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://60.204.128.198:3306/huizhi_answer?useSSL=false&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8
     username: root
-    password: 123@
+    password: rootroot
   # Redis 配置
   # todo 需替换配置
   redis:
     database: 3
-    host: localhost
+    host: 47.115.230.253
     port: 6379
     timeout: 5000
     password: 123456
@@ -23,9 +23,4 @@ mybatis-plus:
   configuration:
     # 生产环境关闭日志
     log-impl: ''
-# 接口文档配置
-knife4j:
-  basic:
-    enable: true
-    username: root
-    password: 123456
+

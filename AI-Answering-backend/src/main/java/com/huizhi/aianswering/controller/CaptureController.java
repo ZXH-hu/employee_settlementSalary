@@ -35,7 +35,16 @@ public class CaptureController {
         }  catch (Exception e) {
             e.printStackTrace();
         }
-        CaptchaUtil.out(specCaptcha,request,response);
+        // 设置响应类型为图片格式
+        response.setContentType("image/png");
+
+        // 输出验证码图片
+        try {
+            CaptchaUtil.out(specCaptcha, request, response);
+        } catch (IOException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("验证码生成失败");
+        }
     }
 
 
@@ -54,7 +63,16 @@ public class CaptureController {
         }  catch (Exception e) {
             e.printStackTrace();
         }
-        CaptchaUtil.out(captcha,request,response);
+        // 设置响应类型为图片格式
+        response.setContentType("image/png");
+
+        // 输出验证码图片
+        try {
+            CaptchaUtil.out(captcha, request, response);
+        } catch (IOException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("验证码生成失败");
+        }
     }
 
 }

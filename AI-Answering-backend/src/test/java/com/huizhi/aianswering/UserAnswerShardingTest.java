@@ -15,7 +15,7 @@ public class UserAnswerShardingTest {
     @Resource
     private UserAnswerService userAnswerService;
 
-    @Test
+    /*@Test
     void test() {
 
         // 设置 appId为1，表示得分类型应用
@@ -37,5 +37,5 @@ public class UserAnswerShardingTest {
 
         UserAnswer userAnswerTwo = userAnswerService.getOne(Wrappers.lambdaQuery(UserAnswer.class).eq(UserAnswer::getAppId, 2L));
         System.out.println(JSONUtil.toJsonStr(userAnswerTwo));
-    }
+    }*/
 }

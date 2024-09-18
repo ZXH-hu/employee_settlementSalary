@@ -69,7 +69,7 @@ public class UserController {
         // 为用户分配一个随机头像
         User user = new User();
         String randomAvatar = avatarService.getRandomAvatar();
-        user.setUserAvatar("http://localhost:8101/api/images/" + randomAvatar); // 设置头像路径
+        user.setUserAvatar("http://47.120.56.193:8101/api/images/" + randomAvatar); // 设置头像路径
         String userAvatar = user.getUserAvatar();
         long result = userService.userRegister(userAccount, userNickName, userPassword, checkPassword, userAvatar);
         return ResultUtils.success(result);

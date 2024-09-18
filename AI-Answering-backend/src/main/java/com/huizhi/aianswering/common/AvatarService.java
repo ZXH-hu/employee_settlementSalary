@@ -9,7 +9,8 @@ import java.util.Random;
 
 @Component
 public class AvatarService {
-    private final String avatarDir = "src/main/resources/static/images"; // 本地图片目录
+//    private final String avatarDir = "src/main/resources/static/images"; // 本地图片目录
+    private final String avatarDir = "/root/AI_answerSys/avatar"; // 本地图片目录
 
     public List<String> getAllAvatars() {
         List<String> avatars = new ArrayList<>();
