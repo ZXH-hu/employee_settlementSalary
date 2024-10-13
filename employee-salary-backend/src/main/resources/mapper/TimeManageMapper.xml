@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huizhi.employee.mapper.TimeManageMapper">
+
+    <resultMap id="BaseResultMap" type="com.huizhi.employee.model.entity.TimeManage">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="timeType" column="timeType" jdbcType="VARCHAR"/>
+            <result property="salaryMath" column="salaryMath" jdbcType="TINYINT"/>
+            <result property="runStatus" column="runStatus" jdbcType="INTEGER"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,timeType,salaryMath,
+        runStatus,createTime,updateTime,
+        isDelete
+    </sql>
+</mapper>
